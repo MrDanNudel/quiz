@@ -1,0 +1,279 @@
+document.addEventListener("DOMContentLoaded", () => {
+  const subjects = {
+    html: generateHTMLQuestions(),
+    css: generateCSSQuestions(),
+    java: generateJavaQuestions(),
+    javascript: generateJavaScriptQuestions(),
+    network: generateNetworkQuestions(),
+  };
+
+  let currentSubject = null;
+  let currentQuestions = [];
+  let currentQuestionIndex = 0;
+  let wrongAnswers = 0;
+  let timer;
+  let timeLeft = 30;
+
+  const startButton = document.getElementById("start-quiz");
+  const tryAgainButton = document.getElementById("try-again");
+  const questionText = document.getElementById("question-text");
+  const answerButtons = Array.from(document.getElementsByClassName("answer"));
+  const resultDiv = document.getElementById("result");
+  const quizArea = document.getElementById("quiz-area");
+  const gameOverDiv = document.getElementById("game-over");
+  const finalMessage = document.getElementById("final-message");
+  const progressBar = document.getElementById("progress");
+
+  startButton.addEventListener("click", startQuiz);
+
+  tryAgainButton.addEventListener("click", () => {
+    location.reload();
+  });
+
+  function startQuiz() {
+    currentSubject = document.getElementById("subjects").value;
+    if (subjects[currentSubject]) {
+      currentQuestions = getRandomQuestions(subjects[currentSubject], 10);
+      currentQuestionIndex = 0;
+      wrongAnswers = 0;
+      document.getElementById("subject-selection").style.display = "none";
+      quizArea.style.display = "block";
+      loadNextQuestion();
+    } else {
+      console.error("Selected subject has no questions.");
+    }
+  }
+
+  function loadNextQuestion() {
+    if (currentQuestionIndex >= currentQuestions.length || wrongAnswers >= 3) {
+      endGame();
+      return;
+    }
+
+    resetAnswerStyles();
+    const question = currentQuestions[currentQuestionIndex];
+    questionText.textContent = question.question;
+    const correctAnswer = question.correctAnswer;
+    const answers = shuffle([...question.wrongAnswers, correctAnswer]);
+
+    answerButtons.forEach((button, index) => {
+      button.textContent = answers[index];
+      button.onclick = () =>
+        handleAnswer(button, answers[index] === correctAnswer);
+    });
+
+    resetTimer();
+    startTimer();
+  }
+
+  function handleAnswer(button, isCorrect) {
+    clearInterval(timer);
+    if (isCorrect) {
+      button.classList.add("correct");
+    } else {
+      button.classList.add("wrong");
+      wrongAnswers++;
+      answerButtons.forEach((btn) => {
+        if (
+          btn.textContent ===
+          currentQuestions[currentQuestionIndex].correctAnswer
+        ) {
+          btn.classList.add("correct");
+        }
+      });
+    }
+    currentQuestionIndex++;
+    setTimeout(loadNextQuestion, 2000);
+  }
+
+  function resetAnswerStyles() {
+    answerButtons.forEach((button) => {
+      button.classList.remove("correct", "wrong");
+    });
+  }
+
+  function resetTimer() {
+    timeLeft = 30;
+    progressBar.style.width = "100%";
+  }
+
+  function startTimer() {
+    timer = setInterval(() => {
+      timeLeft--;
+      progressBar.style.width = (timeLeft / 30) * 100 + "%";
+
+      if (timeLeft <= 0) {
+        clearInterval(timer);
+        handleAnswer(null, false); // No answer chosen
+      }
+    }, 1000);
+  }
+
+  function endGame() {
+    quizArea.style.display = "none";
+    gameOverDiv.style.display = "block";
+    finalMessage.textContent =
+      wrongAnswers >= 3 ? "You lost! Try again?" : "You won! Congratulations!";
+  }
+
+  function getRandomQuestions(array, num) {
+    const shuffled = [...array].sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, num);
+  }
+
+  function shuffle(array) {
+    return array.sort(() => Math.random() - 0.5);
+  }
+
+  // Function to generate questions for each subject
+  function generateHTMLQuestions() {
+    return [
+      {
+        question: "What does HTML stand for?",
+        correctAnswer: "HyperText Markup Language",
+        wrongAnswers: [
+          "HyperText Machine Language",
+          "Hyper Transfer Markup Language",
+          "Hyperlink Text Markup Language",
+        ],
+      },
+      {
+        question: "Which HTML tag is used to define an internal style sheet?",
+        correctAnswer: "<style>",
+        wrongAnswers: ["<script>", "<css>", "<link>"],
+      },
+      {
+        question: "Which HTML element defines the title of a document?",
+        correctAnswer: "<title>",
+        wrongAnswers: ["<head>", "<meta>", "<header>"],
+      },
+      {
+        question: "What is the correct HTML for creating a hyperlink?",
+        correctAnswer: '<a href="https://example.com">Link</a>',
+        wrongAnswers: [
+          '<a name="https://example.com">Link</a>',
+          '<a url="https://example.com">Link</a>',
+          '<a link="https://example.com">Link</a>',
+        ],
+      },
+      // Add more HTML questions up to 30
+    ];
+  }
+
+  function generateCSSQuestions() {
+    return [
+      {
+        question: "What does CSS stand for?",
+        correctAnswer: "Cascading Style Sheets",
+        wrongAnswers: [
+          "Computer Style Sheets",
+          "Colorful Style Sheets",
+          "Creative Style Sheets",
+        ],
+      },
+      {
+        question: "Which property is used to change the background color?",
+        correctAnswer: "background-color",
+        wrongAnswers: ["bgcolor", "color", "background"],
+      },
+      {
+        question: "Which CSS property controls the text size?",
+        correctAnswer: "font-size",
+        wrongAnswers: ["text-size", "font-style", "text-style"],
+      },
+      {
+        question: "What is the default value of the position property?",
+        correctAnswer: "static",
+        wrongAnswers: ["relative", "absolute", "fixed"],
+      },
+      // Add more CSS questions up to 30
+    ];
+  }
+
+  function generateJavaQuestions() {
+    return [
+      {
+        question: "What is the size of an int in Java?",
+        correctAnswer: "4 bytes",
+        wrongAnswers: ["2 bytes", "8 bytes", "16 bytes"],
+      },
+      {
+        question: "Which of these is a reserved word in Java?",
+        correctAnswer: "goto",
+        wrongAnswers: ["function", "let", "type"],
+      },
+      {
+        question: "What is the output of `System.out.println(1 + 2 + '3');`?",
+        correctAnswer: "33",
+        wrongAnswers: ["6", "123", "Compile Error"],
+      },
+      {
+        question: "Which method is used to start a thread in Java?",
+        correctAnswer: "start()",
+        wrongAnswers: ["run()", "init()", "resume()"],
+      },
+      // Add more Java questions up to 30
+    ];
+  }
+
+  function generateJavaScriptQuestions() {
+    return [
+      {
+        question: "Which company developed JavaScript?",
+        correctAnswer: "Netscape",
+        wrongAnswers: ["Google", "Microsoft", "IBM"],
+      },
+      {
+        question: "What is the output of `typeof null` in JavaScript?",
+        correctAnswer: "object",
+        wrongAnswers: ["null", "undefined", "number"],
+      },
+      {
+        question:
+          "Which JavaScript method is used to write on the browser's console?",
+        correctAnswer: "console.log()",
+        wrongAnswers: ["print()", "write()", "document.write()"],
+      },
+      {
+        question: "Which keyword is used to declare a variable in JavaScript?",
+        correctAnswer: "var",
+        wrongAnswers: ["int", "let", "float"],
+      },
+      // Add more JavaScript questions up to 30
+    ];
+  }
+
+  function generateNetworkQuestions() {
+    return [
+      {
+        question: "What does IP stand for in networking?",
+        correctAnswer: "Internet Protocol",
+        wrongAnswers: [
+          "Internet Provider",
+          "International Protocol",
+          "Interpersonal Protocol",
+        ],
+      },
+      {
+        question: "What is a common use of port 80 in networking?",
+        correctAnswer: "HTTP",
+        wrongAnswers: ["HTTPS", "FTP", "SMTP"],
+      },
+      {
+        question: "What does DNS stand for?",
+        correctAnswer: "Domain Name System",
+        wrongAnswers: [
+          "Dynamic Network System",
+          "Digital Naming System",
+          "Domain Naming Server",
+        ],
+      },
+      {
+        question: "Which layer of the OSI model does TCP belong to?",
+        correctAnswer: "Transport Layer",
+        wrongAnswers: ["Network Layer", "Data Link Layer", "Session Layer"],
+      },
+      // Add more Network questions up to 30
+    ];
+  }
+});
