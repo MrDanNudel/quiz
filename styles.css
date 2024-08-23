@@ -75,3 +75,7 @@ button#try-again {
   background-color: #4caf50;
   transition: width 0.1s linear;
 }
+#timer-text {
+  font-size: 16px;
+  margin-top: 10px;
+}

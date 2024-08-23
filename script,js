@@ -17,6 +17,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const startButton = document.getElementById("start-quiz");
   const tryAgainButton = document.getElementById("try-again");
   const questionText = document.getElementById("question-text");
+  const timerText = document.getElementById("timer-text"); // New timer text element
   const answerButtons = Array.from(document.getElementsByClassName("answer"));
   const resultDiv = document.getElementById("result");
   const quizArea = document.getElementById("quiz-area");
@@ -25,7 +26,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const progressBar = document.getElementById("progress");
 
   startButton.addEventListener("click", startQuiz);
-
   tryAgainButton.addEventListener("click", () => {
     location.reload();
   });
@@ -53,6 +53,7 @@ document.addEventListener("DOMContentLoaded", () => {
     resetAnswerStyles();
     const question = currentQuestions[currentQuestionIndex];
     questionText.textContent = question.question;
+    timerText.textContent = `Time left: ${timeLeft}`; // Update timer text
     const correctAnswer = question.correctAnswer;
     const answers = shuffle([...question.wrongAnswers, correctAnswer]);
 
@@ -81,6 +82,10 @@ document.addEventListener("DOMContentLoaded", () => {
           btn.classList.add("correct");
         }
       });
+      if (wrongAnswers >= 3) {
+        endGame();
+        return;
+      }
     }
     currentQuestionIndex++;
     setTimeout(loadNextQuestion, 2000);
@@ -95,18 +100,32 @@ document.addEventListener("DOMContentLoaded", () => {
   function resetTimer() {
     timeLeft = 30;
     progressBar.style.width = "100%";
+    timerText.textContent = `Time left: ${timeLeft}`; // Reset timer text
   }
 
   function startTimer() {
     timer = setInterval(() => {
       timeLeft--;
-      progressBar.style.width = (timeLeft / 30) * 100 + "%";
+      const percentage = (timeLeft / 30) * 100;
+      progressBar.style.transition = "width 0.5s linear";
+      progressBar.style.width = `${percentage}%`;
+      timerText.textContent = `Time left: ${timeLeft}`;
 
       if (timeLeft <= 0) {
         clearInterval(timer);
-        handleAnswer(null, false); // No answer chosen
+        handleLostQuestion(); // Handle the case when time runs out
       }
     }, 1000);
+  }
+
+  function handleLostQuestion() {
+    alert("You lost a question!");
+    wrongAnswers++;
+    if (wrongAnswers >= 3) {
+      endGame();
+    } else {
+      loadNextQuestion();
+    }
   }
 
   function endGame() {
@@ -125,7 +144,6 @@ document.addEventListener("DOMContentLoaded", () => {
     return array.sort(() => Math.random() - 0.5);
   }
 
-  // Function to generate questions for each subject
   function generateHTMLQuestions() {
     return [
       {
@@ -135,25 +153,6 @@ document.addEventListener("DOMContentLoaded", () => {
           "HyperText Machine Language",
           "Hyper Transfer Markup Language",
           "Hyperlink Text Markup Language",
-        ],
-      },
-      {
-        question: "Which HTML tag is used to define an internal style sheet?",
-        correctAnswer: "<style>",
-        wrongAnswers: ["<script>", "<css>", "<link>"],
-      },
-      {
-        question: "Which HTML element defines the title of a document?",
-        correctAnswer: "<title>",
-        wrongAnswers: ["<head>", "<meta>", "<header>"],
-      },
-      {
-        question: "What is the correct HTML for creating a hyperlink?",
-        correctAnswer: '<a href="https://example.com">Link</a>',
-        wrongAnswers: [
-          '<a name="https://example.com">Link</a>',
-          '<a url="https://example.com">Link</a>',
-          '<a link="https://example.com">Link</a>',
         ],
       },
       // Add more HTML questions up to 30
@@ -171,21 +170,6 @@ document.addEventListener("DOMContentLoaded", () => {
           "Creative Style Sheets",
         ],
       },
-      {
-        question: "Which property is used to change the background color?",
-        correctAnswer: "background-color",
-        wrongAnswers: ["bgcolor", "color", "background"],
-      },
-      {
-        question: "Which CSS property controls the text size?",
-        correctAnswer: "font-size",
-        wrongAnswers: ["text-size", "font-style", "text-style"],
-      },
-      {
-        question: "What is the default value of the position property?",
-        correctAnswer: "static",
-        wrongAnswers: ["relative", "absolute", "fixed"],
-      },
       // Add more CSS questions up to 30
     ];
   }
@@ -197,21 +181,6 @@ document.addEventListener("DOMContentLoaded", () => {
         correctAnswer: "4 bytes",
         wrongAnswers: ["2 bytes", "8 bytes", "16 bytes"],
       },
-      {
-        question: "Which of these is a reserved word in Java?",
-        correctAnswer: "goto",
-        wrongAnswers: ["function", "let", "type"],
-      },
-      {
-        question: "What is the output of `System.out.println(1 + 2 + '3');`?",
-        correctAnswer: "33",
-        wrongAnswers: ["6", "123", "Compile Error"],
-      },
-      {
-        question: "Which method is used to start a thread in Java?",
-        correctAnswer: "start()",
-        wrongAnswers: ["run()", "init()", "resume()"],
-      },
       // Add more Java questions up to 30
     ];
   }
@@ -222,22 +191,6 @@ document.addEventListener("DOMContentLoaded", () => {
         question: "Which company developed JavaScript?",
         correctAnswer: "Netscape",
         wrongAnswers: ["Google", "Microsoft", "IBM"],
-      },
-      {
-        question: "What is the output of `typeof null` in JavaScript?",
-        correctAnswer: "object",
-        wrongAnswers: ["null", "undefined", "number"],
-      },
-      {
-        question:
-          "Which JavaScript method is used to write on the browser's console?",
-        correctAnswer: "console.log()",
-        wrongAnswers: ["print()", "write()", "document.write()"],
-      },
-      {
-        question: "Which keyword is used to declare a variable in JavaScript?",
-        correctAnswer: "var",
-        wrongAnswers: ["int", "let", "float"],
       },
       // Add more JavaScript questions up to 30
     ];
@@ -253,25 +206,6 @@ document.addEventListener("DOMContentLoaded", () => {
           "International Protocol",
           "Interpersonal Protocol",
         ],
-      },
-      {
-        question: "What is a common use of port 80 in networking?",
-        correctAnswer: "HTTP",
-        wrongAnswers: ["HTTPS", "FTP", "SMTP"],
-      },
-      {
-        question: "What does DNS stand for?",
-        correctAnswer: "Domain Name System",
-        wrongAnswers: [
-          "Dynamic Network System",
-          "Digital Naming System",
-          "Domain Naming Server",
-        ],
-      },
-      {
-        question: "Which layer of the OSI model does TCP belong to?",
-        correctAnswer: "Transport Layer",
-        wrongAnswers: ["Network Layer", "Data Link Layer", "Session Layer"],
       },
       // Add more Network questions up to 30
     ];
