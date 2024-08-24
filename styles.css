@@ -72,7 +72,7 @@ button#try-again {
 #progress {
   width: 100%;
   height: 100%;
-  background-color: #4caf50;
+  background-color: #b5ffb8;
   transition: width 0.1s linear;
 }
 .question-index-text {
