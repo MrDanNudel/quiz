@@ -5,6 +5,7 @@ document.addEventListener("DOMContentLoaded", () => {
     java: generateJavaQuestions(),
     javascript: generateJavaScriptQuestions(),
     network: generateNetworkQuestions(),
+    cyberSecurity: generateCyberSecurityQuestions(), // Added cybersecurity subject
   };
 
   let currentSubject = null;
@@ -12,20 +13,23 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentQuestionIndex = 0;
   let wrongAnswers = 0;
   let timer;
-  let timeLeft = 30;
+  let timeLeft = 10; // Set initial time left to 10 seconds
+  let currentQuestion = null; // To keep track of the current question
 
   const startButton = document.getElementById("start-quiz");
   const tryAgainButton = document.getElementById("try-again");
   const questionText = document.getElementById("question-text");
-  const timerText = document.getElementById("timer-text"); // New timer text element
   const answerButtons = Array.from(document.getElementsByClassName("answer"));
   const resultDiv = document.getElementById("result");
   const quizArea = document.getElementById("quiz-area");
   const gameOverDiv = document.getElementById("game-over");
   const finalMessage = document.getElementById("final-message");
   const progressBar = document.getElementById("progress");
+  const timeLeftText = document.getElementById("time-left");
+  const questionIndexText = document.getElementById("question-index");
 
   startButton.addEventListener("click", startQuiz);
+
   tryAgainButton.addEventListener("click", () => {
     location.reload();
   });
@@ -38,6 +42,8 @@ document.addEventListener("DOMContentLoaded", () => {
       wrongAnswers = 0;
       document.getElementById("subject-selection").style.display = "none";
       quizArea.style.display = "block";
+      startButton.style.display = "none"; // Hide start button after starting the quiz
+      questionIndexText.style.display = "block"; // Show question index text
       loadNextQuestion();
     } else {
       console.error("Selected subject has no questions.");
@@ -51,11 +57,10 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     resetAnswerStyles();
-    const question = currentQuestions[currentQuestionIndex];
-    questionText.textContent = question.question;
-    timerText.textContent = `Time left: ${timeLeft}`; // Update timer text
-    const correctAnswer = question.correctAnswer;
-    const answers = shuffle([...question.wrongAnswers, correctAnswer]);
+    currentQuestion = currentQuestions[currentQuestionIndex];
+    questionText.textContent = currentQuestion.question;
+    const correctAnswer = currentQuestion.correctAnswer;
+    const answers = shuffle([...currentQuestion.wrongAnswers, correctAnswer]);
 
     answerButtons.forEach((button, index) => {
       button.textContent = answers[index];
@@ -65,27 +70,24 @@ document.addEventListener("DOMContentLoaded", () => {
 
     resetTimer();
     startTimer();
+    updateQuestionIndex();
   }
 
   function handleAnswer(button, isCorrect) {
     clearInterval(timer);
     if (isCorrect) {
       button.classList.add("correct");
-    } else {
+    } else if (button) {
       button.classList.add("wrong");
       wrongAnswers++;
+    }
+
+    if (!isCorrect) {
       answerButtons.forEach((btn) => {
-        if (
-          btn.textContent ===
-          currentQuestions[currentQuestionIndex].correctAnswer
-        ) {
+        if (btn.textContent === currentQuestion.correctAnswer) {
           btn.classList.add("correct");
         }
       });
-      if (wrongAnswers >= 3) {
-        endGame();
-        return;
-      }
     }
     currentQuestionIndex++;
     setTimeout(loadNextQuestion, 2000);
@@ -98,39 +100,38 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function resetTimer() {
-    timeLeft = 30;
+    timeLeft = 10; // Reset to 10 seconds
     progressBar.style.width = "100%";
-    timerText.textContent = `Time left: ${timeLeft}`; // Reset timer text
+    timeLeftText.textContent = `Time left: ${timeLeft}`; // Update text
+    progressBar.style.backgroundColor = "#4caf50"; // Reset color
   }
 
   function startTimer() {
+    const interval = 100; // Update every 100 milliseconds
+    const decrement = 0.1; // Decrease time by 0.1 seconds per interval
     timer = setInterval(() => {
-      timeLeft--;
-      const percentage = (timeLeft / 30) * 100;
-      progressBar.style.transition = "width 0.5s linear";
-      progressBar.style.width = `${percentage}%`;
-      timerText.textContent = `Time left: ${timeLeft}`;
-
+      timeLeft -= decrement;
       if (timeLeft <= 0) {
+        timeLeft = 0;
         clearInterval(timer);
-        handleLostQuestion(); // Handle the case when time runs out
+        progressBar.style.width = "0%";
+        timeLeftText.textContent = `Time left: ${timeLeft}`;
+        handleAnswer(null, false); // No answer chosen
+      } else {
+        progressBar.style.width = (timeLeft / 10) * 100 + "%";
+        if (timeLeft <= 3) {
+          progressBar.style.backgroundColor = "red"; // Change color when time is low
+        }
+        timeLeftText.textContent = `Time left: ${Math.ceil(timeLeft)}`; // Update text
       }
-    }, 1000);
-  }
-
-  function handleLostQuestion() {
-    alert("You lost a question!");
-    wrongAnswers++;
-    if (wrongAnswers >= 3) {
-      endGame();
-    } else {
-      loadNextQuestion();
-    }
+    }, interval);
   }
 
   function endGame() {
     quizArea.style.display = "none";
+    questionIndexText.style.display = "none"; // Hide question index text when game ends
     gameOverDiv.style.display = "block";
+    startButton.style.display = "none"; // Hide start button after quiz ends
     finalMessage.textContent =
       wrongAnswers >= 3 ? "You lost! Try again?" : "You won! Congratulations!";
   }
@@ -144,6 +145,13 @@ document.addEventListener("DOMContentLoaded", () => {
     return array.sort(() => Math.random() - 0.5);
   }
 
+  function updateQuestionIndex() {
+    questionIndexText.textContent = `Question ${currentQuestionIndex + 1} of ${
+      currentQuestions.length
+    }`;
+  }
+
+  // Function to generate questions for each subject
   function generateHTMLQuestions() {
     return [
       {
@@ -155,7 +163,65 @@ document.addEventListener("DOMContentLoaded", () => {
           "Hyperlink Text Markup Language",
         ],
       },
+      {
+        question: "Which HTML tag is used to define an internal style sheet?",
+        correctAnswer: "<style>",
+        wrongAnswers: ["<script>", "<css>", "<link>"],
+      },
+      {
+        question: "Which HTML element defines the title of a document?",
+        correctAnswer: "<title>",
+        wrongAnswers: ["<head>", "<meta>", "<header>"],
+      },
+      {
+        question: "What is the correct HTML for creating a hyperlink?",
+        correctAnswer: '<a href="https://example.com">Link</a>',
+        wrongAnswers: [
+          '<a name="https://example.com">Link</a>',
+          '<a url="https://example.com">Link</a>',
+          '<a link="https://example.com">Link</a>',
+        ],
+      },
       // Add more HTML questions up to 30
+      {
+        question:
+          "Which HTML attribute specifies an alternate text for an image, if the image cannot be displayed?",
+        correctAnswer: "alt",
+        wrongAnswers: ["src", "title", "href"],
+      },
+      {
+        question: "How can you make a list that lists items with bullets?",
+        correctAnswer: "<ul>",
+        wrongAnswers: ["<ol>", "<list>", "<dl>"],
+      },
+      {
+        question: "What does the <head> element contain?",
+        correctAnswer: "Metadata about the document",
+        wrongAnswers: [
+          "The main content of the document",
+          "A table of contents",
+          "The footer",
+        ],
+      },
+      {
+        question: "Which HTML tag is used to display a picture?",
+        correctAnswer: "<img>",
+        wrongAnswers: ["<picture>", "<image>", "<photo>"],
+      },
+      {
+        question: "What is the purpose of the <meta> tag?",
+        correctAnswer: "To provide metadata about the document",
+        wrongAnswers: [
+          "To define styles",
+          "To create links",
+          "To include scripts",
+        ],
+      },
+      {
+        question: "How do you create a numbered list in HTML?",
+        correctAnswer: "<ol>",
+        wrongAnswers: ["<ul>", "<list>", "<dl>"],
+      },
     ];
   }
 
@@ -165,49 +231,414 @@ document.addEventListener("DOMContentLoaded", () => {
         question: "What does CSS stand for?",
         correctAnswer: "Cascading Style Sheets",
         wrongAnswers: [
+          "Creative Style Sheets",
           "Computer Style Sheets",
           "Colorful Style Sheets",
-          "Creative Style Sheets",
         ],
       },
+      {
+        question: "Which CSS property controls the text size?",
+        correctAnswer: "font-size",
+        wrongAnswers: ["text-size", "font-style", "text-style"],
+      },
+      {
+        question: "How do you add a background color in CSS?",
+        correctAnswer: "background-color",
+        wrongAnswers: ["bg-color", "color-background", "background"],
+      },
+      {
+        question: "What is the default value of the 'display' property?",
+        correctAnswer: "block",
+        wrongAnswers: ["inline", "inline-block", "none"],
+      },
+      {
+        question:
+          "Which CSS property is used to change the font of an element?",
+        correctAnswer: "font-family",
+        wrongAnswers: ["font-style", "text-font", "font-size"],
+      },
       // Add more CSS questions up to 30
+      {
+        question: "How can you center align text using CSS?",
+        correctAnswer: "text-align: center;",
+        wrongAnswers: [
+          "text-align: middle;",
+          "text-align: centered;",
+          "align: center;",
+        ],
+      },
+      {
+        question:
+          "Which CSS property is used to set the space between lines of text?",
+        correctAnswer: "line-height",
+        wrongAnswers: ["text-spacing", "letter-spacing", "word-spacing"],
+      },
+      {
+        question:
+          "What is the syntax for selecting an element with the ID 'header'?",
+        correctAnswer: "#header",
+        wrongAnswers: [".header", "header", "header()"],
+      },
+      {
+        question: "How do you apply a CSS class to an element?",
+        correctAnswer: 'class="classname"',
+        wrongAnswers: [
+          'class: "classname"',
+          'className="classname"',
+          'className: "classname"',
+        ],
+      },
+      {
+        question: "Which CSS property is used to set the margin of an element?",
+        correctAnswer: "margin",
+        wrongAnswers: ["padding", "border", "spacing"],
+      },
     ];
   }
 
   function generateJavaQuestions() {
     return [
       {
-        question: "What is the size of an int in Java?",
-        correctAnswer: "4 bytes",
-        wrongAnswers: ["2 bytes", "8 bytes", "16 bytes"],
+        question: "What is the keyword used to define a class in Java?",
+        correctAnswer: "class",
+        wrongAnswers: ["object", "define", "struct"],
+      },
+      {
+        question: "What is the default value of a boolean variable in Java?",
+        correctAnswer: "false",
+        wrongAnswers: ["true", "null", "0"],
+      },
+      {
+        question:
+          "Which method is used to start the execution of a Java program?",
+        correctAnswer: "main",
+        wrongAnswers: ["start", "run", "execute"],
+      },
+      {
+        question: "What is the keyword used to create an object in Java?",
+        correctAnswer: "new",
+        wrongAnswers: ["create", "instance", "object"],
+      },
+      {
+        question: "How do you declare an array in Java?",
+        correctAnswer: "int[] arr;",
+        wrongAnswers: ["array int arr;", "int arr[];", "int arr;"],
       },
       // Add more Java questions up to 30
+      {
+        question: "What is the purpose of the 'static' keyword in Java?",
+        correctAnswer:
+          "It indicates that the variable or method belongs to the class, rather than instances of the class.",
+        wrongAnswers: [
+          "It defines a variable that can be modified.",
+          "It makes a variable or method accessible only within the class.",
+          "It indicates that the variable or method is thread-safe.",
+        ],
+      },
+      {
+        question: "How do you handle exceptions in Java?",
+        correctAnswer: "Using try-catch blocks",
+        wrongAnswers: [
+          "Using if-else statements",
+          "Using switch-case statements",
+          "Using assertions",
+        ],
+      },
+      {
+        question: "What is an abstract class in Java?",
+        correctAnswer:
+          "A class that cannot be instantiated and can contain abstract methods.",
+        wrongAnswers: [
+          "A class that can only be used as a superclass.",
+          "A class that contains only abstract methods.",
+          "A class that has no fields or methods.",
+        ],
+      },
+      {
+        question: "What is the purpose of the 'this' keyword in Java?",
+        correctAnswer: "It refers to the current instance of the class.",
+        wrongAnswers: [
+          "It refers to the superclass of the current class.",
+          "It is used to access static members of a class.",
+          "It is used to create a new instance of a class.",
+        ],
+      },
+      {
+        question: "How do you create a method that returns a value in Java?",
+        correctAnswer: "Specify the return type and use 'return' statement.",
+        wrongAnswers: [
+          "Use 'void' as the return type and omit 'return' statement.",
+          "Specify the return type and omit 'return' statement.",
+          "Use 'void' as the return type and use 'return' statement.",
+        ],
+      },
     ];
   }
 
   function generateJavaScriptQuestions() {
     return [
       {
-        question: "Which company developed JavaScript?",
-        correctAnswer: "Netscape",
-        wrongAnswers: ["Google", "Microsoft", "IBM"],
+        question:
+          "What is the correct syntax for referring to an external script called 'script.js'?",
+        correctAnswer: '<script src="script.js"></script>',
+        wrongAnswers: [
+          '<script href="script.js"></script>',
+          '<script name="script.js"></script>',
+          '<script file="script.js"></script>',
+        ],
+      },
+      {
+        question: "How do you create a function in JavaScript?",
+        correctAnswer: "function myFunction() {}",
+        wrongAnswers: [
+          "function: myFunction() {}",
+          "create function myFunction() {}",
+          "function = myFunction() {}",
+        ],
+      },
+      {
+        question: "How do you declare a variable in JavaScript?",
+        correctAnswer: "var x;",
+        wrongAnswers: ["variable x;", "int x;", "let x;"],
+      },
+      {
+        question: "What is the correct way to add a comment in JavaScript?",
+        correctAnswer: "// This is a comment",
+        wrongAnswers: [
+          "<!-- This is a comment -->",
+          "# This is a comment",
+          "/* This is a comment */",
+        ],
+      },
+      {
+        question:
+          "How do you access an element with the id 'header' in JavaScript?",
+        correctAnswer: "document.getElementById('header')",
+        wrongAnswers: [
+          "document.getElementByClass('header')",
+          "document.querySelector('#header')",
+          "document.querySelectorAll('header')",
+        ],
       },
       // Add more JavaScript questions up to 30
+      {
+        question:
+          "What is the purpose of the 'return' statement in a function?",
+        correctAnswer:
+          "It exits the function and returns a value to the caller.",
+        wrongAnswers: [
+          "It terminates the program.",
+          "It continues to the next iteration of a loop.",
+          "It creates a new function.",
+        ],
+      },
+      {
+        question: "How do you declare a constant variable in JavaScript?",
+        correctAnswer: "const myConst = 10;",
+        wrongAnswers: [
+          "var myConst = 10;",
+          "let myConst = 10;",
+          "constant myConst = 10;",
+        ],
+      },
+      {
+        question: "Which operator is used for strict equality in JavaScript?",
+        correctAnswer: "===",
+        wrongAnswers: ["==", "=", "!=="],
+      },
+      {
+        question: "What is the purpose of the 'typeof' operator in JavaScript?",
+        correctAnswer: "It returns the type of a variable or expression.",
+        wrongAnswers: [
+          "It converts a variable to a specific type.",
+          "It checks if a variable is undefined.",
+          "It compares two values for equality.",
+        ],
+      },
+      {
+        question: "How do you define a class in JavaScript?",
+        correctAnswer: "class MyClass {}",
+        wrongAnswers: [
+          "function MyClass {}",
+          "define class MyClass {}",
+          "class = MyClass {}",
+        ],
+      },
     ];
   }
 
   function generateNetworkQuestions() {
     return [
       {
-        question: "What does IP stand for in networking?",
+        question: "What does IP stand for?",
         correctAnswer: "Internet Protocol",
         wrongAnswers: [
-          "Internet Provider",
-          "International Protocol",
-          "Interpersonal Protocol",
+          "Internal Protocol",
+          "Internet Process",
+          "Internal Process",
         ],
       },
-      // Add more Network questions up to 30
+      {
+        question:
+          "Which layer of the OSI model is responsible for routing packets?",
+        correctAnswer: "Network layer",
+        wrongAnswers: ["Data link layer", "Physical layer", "Transport layer"],
+      },
+      {
+        question: "What is the main purpose of DNS?",
+        correctAnswer: "To resolve domain names to IP addresses",
+        wrongAnswers: [
+          "To encrypt data",
+          "To manage network traffic",
+          "To provide network security",
+        ],
+      },
+      {
+        question: "What does HTTP stand for?",
+        correctAnswer: "Hypertext Transfer Protocol",
+        wrongAnswers: [
+          "Hyperlink Transfer Protocol",
+          "Hypertext Transfer Process",
+          "Hypertext Transfer Program",
+        ],
+      },
+      {
+        question: "What is the purpose of NAT?",
+        correctAnswer:
+          "To allow multiple devices on a local network to share a single public IP address",
+        wrongAnswers: [
+          "To provide network security",
+          "To manage bandwidth usage",
+          "To assign IP addresses dynamically",
+        ],
+      },
+      // Add more network questions up to 30
+      {
+        question: "Which protocol is used to send email?",
+        correctAnswer: "SMTP",
+        wrongAnswers: ["HTTP", "FTP", "POP3"],
+      },
+      {
+        question: "What does VPN stand for?",
+        correctAnswer: "Virtual Private Network",
+        wrongAnswers: [
+          "Virtual Public Network",
+          "Virtual Private Node",
+          "Virtual Public Node",
+        ],
+      },
+      {
+        question:
+          "Which protocol is used for secure communication over a network?",
+        correctAnswer: "HTTPS",
+        wrongAnswers: ["HTTP", "FTP", "SSH"],
+      },
+      {
+        question: "What is the purpose of ARP?",
+        correctAnswer: "To map an IP address to a MAC address",
+        wrongAnswers: [
+          "To assign IP addresses dynamically",
+          "To route packets between networks",
+          "To encrypt data transmitted over the network",
+        ],
+      },
+      {
+        question: "What is a subnet mask used for?",
+        correctAnswer: "To define the range of IP addresses within a network",
+        wrongAnswers: [
+          "To specify the size of a network packet",
+          "To encrypt network traffic",
+          "To manage network traffic between devices",
+        ],
+      },
+    ];
+  }
+
+  function generateCyberSecurityQuestions() {
+    return [
+      {
+        question: "What does VPN stand for?",
+        correctAnswer: "Virtual Private Network",
+        wrongAnswers: [
+          "Virtual Public Network",
+          "Virtual Private Node",
+          "Virtual Public Node",
+        ],
+      },
+      {
+        question: "What is a common method for securing data at rest?",
+        correctAnswer: "Encryption",
+        wrongAnswers: ["Compression", "Backup", "Data masking"],
+      },
+      {
+        question: "Which protocol is commonly used to secure web traffic?",
+        correctAnswer: "HTTPS",
+        wrongAnswers: ["HTTP", "FTP", "SMTP"],
+      },
+      {
+        question: "What is a firewall used for?",
+        correctAnswer: "To filter incoming and outgoing network traffic",
+        wrongAnswers: [
+          "To encrypt data",
+          "To manage IP addresses",
+          "To create network backups",
+        ],
+      },
+      {
+        question: "What is two-factor authentication?",
+        correctAnswer:
+          "A security process that requires two separate forms of identification",
+        wrongAnswers: [
+          "A system that requires two passwords",
+          "A process of encrypting data",
+          "A way to bypass network security",
+        ],
+      },
+      {
+        question:
+          "What is a common method used to gain unauthorized access to systems?",
+        correctAnswer: "Phishing",
+        wrongAnswers: ["Encryption", "Firewall", "Backup"],
+      },
+      {
+        question: "What is a vulnerability assessment?",
+        correctAnswer: "A process to identify and evaluate security weaknesses",
+        wrongAnswers: [
+          "A method to encrypt data",
+          "A way to perform network backups",
+          "A technique for data compression",
+        ],
+      },
+      {
+        question: "What does the term 'malware' refer to?",
+        correctAnswer:
+          "Malicious software designed to damage or disrupt systems",
+        wrongAnswers: [
+          "Software for system updates",
+          "Programs that manage network traffic",
+          "Utilities for data recovery",
+        ],
+      },
+      {
+        question: "What is social engineering in the context of cybersecurity?",
+        correctAnswer:
+          "Manipulating people into divulging confidential information",
+        wrongAnswers: [
+          "A technique for network encryption",
+          "A method for system updates",
+          "A process for managing network traffic",
+        ],
+      },
+      {
+        question: "What is a zero-day exploit?",
+        correctAnswer:
+          "A vulnerability that is exploited before the vendor has released a fix",
+        wrongAnswers: [
+          "A system update that fixes vulnerabilities",
+          "A type of firewall",
+          "A form of data encryption",
+        ],
+      },
     ];
   }
 });

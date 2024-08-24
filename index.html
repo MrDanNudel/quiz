@@ -9,6 +9,8 @@
   <body>
     <div class="quiz-container">
       <h1>Quiz App</h1>
+      <div id="question-index" class="question-index-text"></div>
+      <!-- New element -->
 
       <!-- Subject Selection -->
       <div id="subject-selection">
@@ -19,23 +21,26 @@
           <option value="java">Java</option>
           <option value="javascript">JavaScript</option>
           <option value="network">Network</option>
+          <option value="cyberSecurity">Cyber Security</option>
         </select>
       </div>
       <button id="start-quiz">Start Quiz</button>
 
-      <div id="quiz-area">
-        <p id="question-text"></p>
-        <p id="timer-text">Time left: 30</p> <!-- New timer text element -->
-        <div id="progress" class="progress-bar"></div>
-        <div class="answer-container">
-          <button class="answer">Answer 1</button>
-          <button class="answer">Answer 2</button>
-          <button class="answer">Answer 3</button>
-          <button class="answer">Answer 4</button>
+      <!-- Quiz Area -->
+      <div id="quiz-area" style="display: none">
+        <div id="question-container">
+          <p id="question-text"></p>
+          <p id="time-left" style="color: gray">Time left: 10</p>
+          <div id="progress-bar">
+            <div id="progress"></div>
+          </div>
+          <div id="answers">
+            <button class="answer"></button>
+            <button class="answer"></button>
+            <button class="answer"></button>
+            <button class="answer"></button>
+          </div>
         </div>
-      </div>
-      
-      
         <div id="result" style="display: none"></div>
       </div>
 

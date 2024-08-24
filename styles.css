@@ -75,7 +75,9 @@ button#try-again {
   background-color: #4caf50;
   transition: width 0.1s linear;
 }
-#timer-text {
+.question-index-text {
+  display: none; /* Initially hide the question index text */
   font-size: 16px;
-  margin-top: 10px;
+  color: #666;
+  margin-bottom: 10px;
 }
